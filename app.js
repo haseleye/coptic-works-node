@@ -53,7 +53,7 @@ const port = normalizePort(process.env.PORT || '3001');
 app.set('port', port);
 
 const sslInstalled = process.env.SECURITY_SSL_INSTALLED === 'True';
-if (sslInstalled) {
+if (true) {
   const certPath = '/etc/letsencrypt/live/works.copticoffice.com/';
   const options = {
     key: fs.readFileSync(path.join(certPath, 'privkey.pem')),
