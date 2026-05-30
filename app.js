@@ -16,6 +16,9 @@ const {authorize} = require('./middleware/auth');
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const adminRouter = require('./routes/admin');
+const fs = require("fs");
+const https = require("https");
+const http = require("http");
 
 const app = express();
 
@@ -49,8 +52,30 @@ app.use(errorHandler);
 const port = normalizePort(process.env.PORT || '3001');
 app.set('port', port);
 
-connectDB()
-    .then(() => app.listen(port, onListening).on('error', onError))
+const sslInstalled = process.env.SECURITY_SSL_INSTALLED === 'True';
+if (sslInstalled) {
+  const certPath = '/etc/letsencrypt/live/works.copticoffice.com/';
+  const options = {
+    key: fs.readFileSync(path.join(certPath, 'privkey.pem')),
+    cert: fs.readFileSync(path.join(certPath, 'cert.pem')),
+    ca: [
+      fs.readFileSync(path.join(certPath, 'chain.pem')),
+      fs.readFileSync(path.join(certPath, 'fullchain.pem')),
+    ]
+  };
+  const httpsServer = https.createServer(options, app);
+  connectDB()
+      .then(() => {
+        httpsServer.listen(port, onListening).on('error', onError);
+      });
+}
+else {
+  const httpServer = http.createServer(app);
+  connectDB()
+      .then(() => {
+        httpServer.listen(port, onListening).on('error', onError);
+      });
+}
 
 /** Normalize a port into a number, string, or false */
 function normalizePort(val) {
